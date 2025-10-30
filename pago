@@ -1,0 +1,77 @@
+# pago.py
+
+from datetime import datetime
+
+class Pago:
+    """
+    Representa un pago asociado a una reserva en el sistema del hotel.
+    Contiene la información sobre el monto, método de pago, fecha y estado.
+    """
+
+    METODOS_VALIDOS = ["Efectivo", "Tarjeta de Crédito", "Tarjeta de Débito", "Transferencia", "PayPal"]
+    ESTADOS_VALIDOS = ["Pendiente", "Completado", "Reembolsado", "Cancelado"]
+
+    def __init__(self, reserva, monto, metodo_pago):
+        """
+        Constructor de la clase Pago.
+        
+        Args:
+            reserva (Reserva): La reserva asociada al pago.
+            monto (float): El monto total a pagar.
+            metodo_pago (str): Método utilizado para realizar el pago.
+        """
+        self.reserva = reserva
+        self.monto = monto
+        self.metodo_pago = metodo_pago if metodo_pago in self.METODOS_VALIDOS else "Efectivo"
+        self.fecha_pago = None
+        self.estado = "Pendiente"
+        self.id_pago = self.generar_id_pago()
+
+    def generar_id_pago(self):
+        """
+        Genera un identificador único para el pago basado en la fecha y el número de habitación.
+        """
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        return f"PAGO-{self.reserva.habitacion.numero}-{timestamp}"
+
+    def realizar_pago(self):
+        """
+        Marca el pago como completado y registra la fecha de pago.
+        """
+        if self.estado == "Completado":
+            raise Exception("El pago ya fue realizado.")
+        self.estado = "Completado"
+        self.fecha_pago = datetime.now()
+
+    def reembolsar_pago(self):
+        """
+        Marca el pago como reembolsado, en caso de cancelación o error.
+        """
+        if self.estado != "Completado":
+            raise Exception("Solo los pagos completados pueden reembolsarse.")
+        self.estado = "Reembolsado"
+
+    def cancelar_pago(self):
+        """
+        Cancela el pago si aún no ha sido completado.
+        """
+        if self.estado == "Completado":
+            raise Exception("No se puede cancelar un pago ya completado.")
+        self.estado = "Cancelado"
+
+    def mostrar_detalles(self):
+        """
+        Devuelve un resumen con la información completa del pago.
+        """
+        fecha = self.fecha_pago.strftime("%Y-%m-%d %H:%M") if self.fecha_pago else "Sin registrar"
+        return (
+            f"ID Pago: {self.id_pago}\n"
+            f"Reserva: {self.reserva.habitacion.numero} ({self.reserva.cliente.nombre})\n"
+            f"Método: {self.metodo_pago}\n"
+            f"Monto: ${self.monto:.2f}\n"
+            f"Estado: {self.estado}\n"
+            f"Fecha: {fecha}\n"
+        )
+
+    def __str__(self):
+        return f"[{self.estado}] {self.metodo_pago} - ${self.monto:.2f} ({self.id_pago})"
