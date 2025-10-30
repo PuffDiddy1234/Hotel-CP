@@ -1,3 +1,5 @@
+# habitacion.py
+*.py linguist-language=Python
 # cliente.py
 from datetime import datetime
 
