@@ -1,0 +1,60 @@
+# habitacion.py
+
+class Habitacion:
+    def __init__(self, numero, tipo, precio, capacidad, servicios=None):
+        """
+        Inicializa una habitación.
+        :param numero: Número de la habitación
+        :param tipo: Tipo de habitación (Individual, Doble, Suite, etc.)
+        :param precio: Precio por noche
+        :param capacidad: Número máximo de personas
+        :param servicios: Lista de servicios adicionales (opcional)
+        """
+        self.numero = numero
+        self.tipo = tipo
+        self.precio = precio
+        self.capacidad = capacidad
+        self.disponible = True
+        self.servicios = servicios if servicios else []
+
+    def mostrar_info(self):
+        """
+        Muestra información completa de la habitación.
+        """
+        estado = "Disponible" if self.disponible else "Ocupada"
+        servicios = ", ".join(self.servicios) if self.servicios else "Ninguno"
+        info = (
+            f"Habitación {self.numero} - {self.tipo}\n"
+            f"Precio por noche: ${self.precio}\n"
+            f"Capacidad: {self.capacidad} persona(s)\n"
+            f"Servicios: {servicios}\n"
+            f"Estado: {estado}"
+        )
+        return info
+
+    def ocupar(self):
+        """
+        Marca la habitación como ocupada.
+        """
+        if self.disponible:
+            self.disponible = False
+            print(f"Habitación {self.numero} ahora está ocupada.")
+        else:
+            print(f"Habitación {self.numero} ya está ocupada.")
+
+    def liberar(self):
+        """
+        Marca la habitación como disponible.
+        """
+        if not self.disponible:
+            self.disponible = True
+            print(f"Habitación {self.numero} ahora está disponible.")
+        else:
+            print(f"Habitación {self.numero} ya estaba disponible.")
+
+    def __str__(self):
+        """
+        Retorna una versión resumida de la habitación.
+        """
+        estado = "Disponible" if self.disponible else "Ocupada"
+        return f"Habitación {self.numero} - {self.tipo} - ${self.precio} - {estado}"
