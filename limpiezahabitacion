@@ -1,0 +1,314 @@
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import List, Optional
+import json
+
+
+class EstadoHabitacion(Enum):
+    """Estados posibles de una habitación"""
+    LIMPIA = "limpia"
+    SUCIA = "sucia"
+    EN_LIMPIEZA = "en_limpieza"
+    MANTENIMIENTO = "mantenimiento"
+    OCUPADA = "ocupada"
+    DISPONIBLE = "disponible"
+
+
+class PrioridadLimpieza(Enum):
+    """Niveles de prioridad para limpieza"""
+    ALTA = 1
+    MEDIA = 2
+    BAJA = 3
+
+
+class TipoLimpieza(Enum):
+    """Tipos de limpieza"""
+    COMPLETA = "completa"
+    EXPRESS = "express"
+    PROFUNDA = "profunda"
+    MANTENIMIENTO = "mantenimiento"
+
+
+class Habitacion:
+    """Representa una habitación del hotel"""
+    
+    def _init_(self, numero: int, piso: int, tipo: str):
+        self.numero = numero
+        self.piso = piso
+        self.tipo = tipo
+        self.estado = EstadoHabitacion.DISPONIBLE
+        self.ultima_limpieza: Optional[datetime] = None
+        self.notas: List[str] = []
+    
+    def _repr_(self):
+        return f"Habitación {self.numero} ({self.tipo}) - Estado: {self.estado.value}"
+    
+    def to_dict(self):
+        return {
+            "numero": self.numero,
+            "piso": self.piso,
+            "tipo": self.tipo,
+            "estado": self.estado.value,
+            "ultima_limpieza": self.ultima_limpieza.isoformat() if self.ultima_limpieza else None,
+            "notas": self.notas
+        }
+
+
+class Personal:
+    """Representa un empleado de limpieza"""
+    
+    def _init_(self, id: int, nombre: str, turno: str):
+        self.id = id
+        self.nombre = nombre
+        self.turno = turno
+        self.habitaciones_asignadas: List[int] = []
+        self.tareas_completadas = 0
+    
+    def _repr_(self):
+        return f"Personal: {self.nombre} (Turno: {self.turno})"
+    
+    def asignar_habitacion(self, numero_habitacion: int):
+        if numero_habitacion not in self.habitaciones_asignadas:
+            self.habitaciones_asignadas.append(numero_habitacion)
+    
+    def completar_tarea(self):
+        self.tareas_completadas += 1
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "nombre": self.nombre,
+            "turno": self.turno,
+            "habitaciones_asignadas": self.habitaciones_asignadas,
+            "tareas_completadas": self.tareas_completadas
+        }
+
+
+class TareaLimpieza:
+    """Representa una tarea de limpieza"""
+    
+    def _init_(self, id: int, habitacion: Habitacion, tipo: TipoLimpieza, 
+                 prioridad: PrioridadLimpieza):
+        self.id = id
+        self.habitacion = habitacion
+        self.tipo = tipo
+        self.prioridad = prioridad
+        self.personal_asignado: Optional[Personal] = None
+        self.fecha_creacion = datetime.now()
+        self.fecha_inicio: Optional[datetime] = None
+        self.fecha_fin: Optional[datetime] = None
+        self.completada = False
+        self.observaciones = ""
+    
+    def asignar_personal(self, personal: Personal):
+        self.personal_asignado = personal
+        personal.asignar_habitacion(self.habitacion.numero)
+    
+    def iniciar(self):
+        self.fecha_inicio = datetime.now()
+        self.habitacion.estado = EstadoHabitacion.EN_LIMPIEZA
+    
+    def completar(self, observaciones: str = ""):
+        self.fecha_fin = datetime.now()
+        self.completada = True
+        self.observaciones = observaciones
+        self.habitacion.estado = EstadoHabitacion.LIMPIA
+        self.habitacion.ultima_limpieza = self.fecha_fin
+        if self.personal_asignado:
+            self.personal_asignado.completar_tarea()
+    
+    def tiempo_empleado(self) -> Optional[timedelta]:
+        if self.fecha_inicio and self.fecha_fin:
+            return self.fecha_fin - self.fecha_inicio
+        return None
+    
+    def _repr_(self):
+        estado = "Completada" if self.completada else "Pendiente"
+        return f"Tarea #{self.id} - Hab. {self.habitacion.numero} ({self.tipo.value}) - {estado}"
+    
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "habitacion": self.habitacion.numero,
+            "tipo": self.tipo.value,
+            "prioridad": self.prioridad.value,
+            "personal": self.personal_asignado.nombre if self.personal_asignado else None,
+            "fecha_creacion": self.fecha_creacion.isoformat(),
+            "fecha_inicio": self.fecha_inicio.isoformat() if self.fecha_inicio else None,
+            "fecha_fin": self.fecha_fin.isoformat() if self.fecha_fin else None,
+            "completada": self.completada,
+            "tiempo_empleado": str(self.tiempo_empleado()) if self.tiempo_empleado() else None,
+            "observaciones": self.observaciones
+        }
+
+
+class SistemaLimpieza:
+    """Sistema principal de gestión de limpieza"""
+    
+    def _init_(self):
+        self.habitaciones: dict[int, Habitacion] = {}
+        self.personal: dict[int, Personal] = {}
+        self.tareas: dict[int, TareaLimpieza] = {}
+        self.contador_tareas = 0
+    
+    def registrar_habitacion(self, numero: int, piso: int, tipo: str):
+        """Registra una nueva habitación en el sistema"""
+        habitacion = Habitacion(numero, piso, tipo)
+        self.habitaciones[numero] = habitacion
+        return habitacion
+    
+    def registrar_personal(self, id: int, nombre: str, turno: str):
+        """Registra un nuevo empleado de limpieza"""
+        empleado = Personal(id, nombre, turno)
+        self.personal[id] = empleado
+        return empleado
+    
+    def crear_tarea(self, numero_habitacion: int, tipo: TipoLimpieza, 
+                    prioridad: PrioridadLimpieza) -> Optional[TareaLimpieza]:
+        """Crea una nueva tarea de limpieza"""
+        if numero_habitacion not in self.habitaciones:
+            print(f"Error: Habitación {numero_habitacion} no existe")
+            return None
+        
+        self.contador_tareas += 1
+        habitacion = self.habitaciones[numero_habitacion]
+        tarea = TareaLimpieza(self.contador_tareas, habitacion, tipo, prioridad)
+        self.tareas[self.contador_tareas] = tarea
+        return tarea
+    
+    def asignar_tarea(self, id_tarea: int, id_personal: int) -> bool:
+        """Asigna una tarea a un empleado"""
+        if id_tarea not in self.tareas or id_personal not in self.personal:
+            return False
+        
+        tarea = self.tareas[id_tarea]
+        personal = self.personal[id_personal]
+        tarea.asignar_personal(personal)
+        return True
+    
+    def obtener_tareas_pendientes(self) -> List[TareaLimpieza]:
+        """Obtiene todas las tareas pendientes ordenadas por prioridad"""
+        pendientes = [t for t in self.tareas.values() if not t.completada]
+        return sorted(pendientes, key=lambda x: x.prioridad.value)
+    
+    def obtener_habitaciones_por_estado(self, estado: EstadoHabitacion) -> List[Habitacion]:
+        """Obtiene habitaciones filtradas por estado"""
+        return [h for h in self.habitaciones.values() if h.estado == estado]
+    
+    def obtener_rendimiento_personal(self, id_personal: int) -> dict:
+        """Obtiene estadísticas de rendimiento de un empleado"""
+        if id_personal not in self.personal:
+            return {}
+        
+        empleado = self.personal[id_personal]
+        tareas = [t for t in self.tareas.values() 
+                 if t.personal_asignado and t.personal_asignado.id == id_personal]
+        
+        tareas_completadas = [t for t in tareas if t.completada]
+        tiempos = [t.tiempo_empleado() for t in tareas_completadas if t.tiempo_empleado()]
+        
+        tiempo_promedio = None
+        if tiempos:
+            tiempo_promedio = sum(tiempos, timedelta()) / len(tiempos)
+        
+        return {
+            "empleado": empleado.nombre,
+            "tareas_asignadas": len(tareas),
+            "tareas_completadas": len(tareas_completadas),
+            "tareas_pendientes": len(tareas) - len(tareas_completadas),
+            "tiempo_promedio": str(tiempo_promedio) if tiempo_promedio else "N/A"
+        }
+    
+    def generar_reporte_diario(self) -> dict:
+        """Genera un reporte del estado actual del sistema"""
+        total_habitaciones = len(self.habitaciones)
+        limpias = len(self.obtener_habitaciones_por_estado(EstadoHabitacion.LIMPIA))
+        sucias = len(self.obtener_habitaciones_por_estado(EstadoHabitacion.SUCIA))
+        en_limpieza = len(self.obtener_habitaciones_por_estado(EstadoHabitacion.EN_LIMPIEZA))
+        
+        total_tareas = len(self.tareas)
+        completadas = sum(1 for t in self.tareas.values() if t.completada)
+        
+        return {
+            "fecha": datetime.now().isoformat(),
+            "habitaciones": {
+                "total": total_habitaciones,
+                "limpias": limpias,
+                "sucias": sucias,
+                "en_limpieza": en_limpieza
+            },
+            "tareas": {
+                "total": total_tareas,
+                "completadas": completadas,
+                "pendientes": total_tareas - completadas
+            },
+            "personal_activo": len(self.personal)
+        }
+    
+    def exportar_json(self, archivo: str):
+        """Exporta el estado del sistema a un archivo JSON"""
+        datos = {
+            "habitaciones": [h.to_dict() for h in self.habitaciones.values()],
+            "personal": [p.to_dict() for p in self.personal.values()],
+            "tareas": [t.to_dict() for t in self.tareas.values()]
+        }
+        
+        with open(archivo, 'w', encoding='utf-8') as f:
+            json.dump(datos, f, indent=2, ensure_ascii=False)
+
+
+# Ejemplo de uso
+if _name_ == "_main_":
+    # Inicializar sistema
+    sistema = SistemaLimpieza()
+    
+    # Registrar habitaciones
+    for i in range(101, 110):
+        piso = i // 100
+        tipo = "Suite" if i % 2 == 0 else "Estándar"
+        sistema.registrar_habitacion(i, piso, tipo)
+    
+    # Registrar personal
+    sistema.registrar_personal(1, "María García", "Mañana")
+    sistema.registrar_personal(2, "Juan Pérez", "Tarde")
+    sistema.registrar_personal(3, "Ana López", "Mañana")
+    
+    # Crear tareas
+    tarea1 = sistema.crear_tarea(101, TipoLimpieza.COMPLETA, PrioridadLimpieza.ALTA)
+    tarea2 = sistema.crear_tarea(102, TipoLimpieza.EXPRESS, PrioridadLimpieza.MEDIA)
+    tarea3 = sistema.crear_tarea(103, TipoLimpieza.PROFUNDA, PrioridadLimpieza.ALTA)
+    
+    # Asignar tareas
+    sistema.asignar_tarea(1, 1)
+    sistema.asignar_tarea(2, 2)
+    sistema.asignar_tarea(3, 1)
+    
+    # Simular inicio y finalización de tarea
+    if tarea1:
+        tarea1.iniciar()
+        tarea1.completar("Habitación limpiada correctamente")
+    
+    # Mostrar información
+    print("=" * 60)
+    print("SISTEMA DE GESTIÓN DE LIMPIEZA HOTELERA")
+    print("=" * 60)
+    
+    print("\nTareas pendientes:")
+    for tarea in sistema.obtener_tareas_pendientes():
+        print(f"  - {tarea}")
+    
+    print("\nRendimiento del personal:")
+    for id_personal in sistema.personal.keys():
+        rendimiento = sistema.obtener_rendimiento_personal(id_personal)
+        print(f"\n  {rendimiento['empleado']}:")
+        print(f"    Completadas: {rendimiento['tareas_completadas']}/{rendimiento['tareas_asignadas']}")
+        print(f"    Tiempo promedio: {rendimiento['tiempo_promedio']}")
+    
+    print("\nReporte diario:")
+    reporte = sistema.generar_reporte_diario()
+    print(f"  Habitaciones limpias: {reporte['habitaciones']['limpias']}/{reporte['habitaciones']['total']}")
+    print(f"  Tareas completadas: {reporte['tareas']['completadas']}/{reporte['tareas']['total']}")
+    
+    # Exportar datos
+    sistema.exportar_json("reporte_limpieza.json")
+    print("\n✓ Datos exportados a reporte_limpieza.json
