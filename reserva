@@ -1,0 +1,82 @@
+# reserva.py
+
+from datetime import datetime
+
+class Reserva:
+    """
+    Representa una reserva realizada por un cliente para una habitación.
+    Contiene toda la información relacionada con las fechas, duración, costo y estado.
+    """
+
+    ESTADOS_VALIDOS = ["Activa", "Cancelada", "Finalizada"]
+
+    def __init__(self, cliente, habitacion, fecha_entrada, fecha_salida):
+        """
+        Constructor de la clase Reserva.
+        
+        Args:
+            cliente (Cliente): El cliente que realiza la reserva.
+            habitacion (Habitacion): La habitación reservada.
+            fecha_entrada (str): Fecha de entrada en formato 'YYYY-MM-DD'.
+            fecha_salida (str): Fecha de salida en formato 'YYYY-MM-DD'.
+        """
+        self.cliente = cliente
+        self.habitacion = habitacion
+        self.fecha_entrada = datetime.strptime(fecha_entrada, "%Y-%m-%d")
+        self.fecha_salida = datetime.strptime(fecha_salida, "%Y-%m-%d")
+        self.estado = "Activa"
+        self.costo_total = self.calcular_costo_total()
+        self.fecha_creacion = datetime.now()
+
+    def calcular_costo_total(self):
+        """
+        Calcula el costo total de la reserva basado en la duración y el precio por noche.
+        """
+        dias = (self.fecha_salida - self.fecha_entrada).days
+        if dias <= 0:
+            raise ValueError("La fecha de salida debe ser posterior a la fecha de entrada.")
+        return dias * self.habitacion.precio
+
+    def cancelar_reserva(self):
+        """
+        Cancela la reserva y actualiza el estado y disponibilidad de la habitación.
+        """
+        if self.estado == "Cancelada":
+            raise Exception("La reserva ya está cancelada.")
+        self.estado = "Cancelada"
+        self.habitacion.marcar_disponible()
+
+    def finalizar_reserva(self):
+        """
+        Marca la reserva como finalizada y libera la habitación.
+        """
+        if self.estado != "Activa":
+            raise Exception("Solo las reservas activas pueden finalizarse.")
+        self.estado = "Finalizada"
+        self.habitacion.marcar_disponible()
+
+    def obtener_duracion(self):
+        """
+        Devuelve la cantidad de noches reservadas.
+        """
+        return (self.fecha_salida - self.fecha_entrada).days
+
+    def mostrar_resumen(self):
+        """
+        Devuelve un texto con toda la información relevante de la reserva.
+        """
+        return (
+            f"Reserva del cliente {self.cliente.nombre}\n"
+            f"Habitación: {self.habitacion.numero} ({self.habitacion.tipo})\n"
+            f"Desde: {self.fecha_entrada.date()} Hasta: {self.fecha_salida.date()}\n"
+            f"Noches: {self.obtener_duracion()}\n"
+            f"Total: ${self.costo_total:.2f}\n"
+            f"Estado: {self.estado}\n"
+        )
+
+    def __str__(self):
+        return (
+            f"[{self.estado}] Reserva de {self.cliente.nombre} "
+            f"para habitación {self.habitacion.numero} "
+            f"({self.fecha_entrada.date()} → {self.fecha_salida.date()})"
+        )
