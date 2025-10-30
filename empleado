@@ -1,1 +1,57 @@
 
+
+Clase que representa a un empleado de un hotel.
+    """
+
+    def __init__(self, nombre, apellido, id_empleado, puesto, salario):
+        """
+        Inicializa un nuevo empleado del hotel.
+
+        :param nombre: Nombre del empleado
+        :param apellido: Apellido del empleado
+        :param id_empleado: Identificador único del empleado
+        :param puesto: Cargo del empleado (ej. Recepcionista, Chef, Limpieza)
+        :param salario: Salario mensual del empleado
+        """
+        self.nombre = nombre
+        self.apellido = apellido
+        self.id_empleado = id_empleado
+        self.puesto = puesto
+        self.salario = salario
+        self.activo = True  # Por defecto, el empleado está activo
+
+    def __str__(self):
+        """Devuelve una representación legible del empleado."""
+        estado = "Activo" if self.activo else "Inactivo"
+        return f"{self.nombre} {self.apellido} | ID: {self.id_empleado} | Puesto: {self.puesto} | Estado: {estado}"
+
+    def calcular_salario_anual(self):
+        """Calcula el salario anual del empleado."""
+        return self.salario * 12
+
+    def cambiar_puesto(self, nuevo_puesto, nuevo_salario=None):
+        """
+        Cambia el puesto del empleado (opcionalmente, también el salario).
+        """
+        self.puesto = nuevo_puesto
+        if nuevo_salario:
+            self.salario = nuevo_salario
+        print(f"{self.nombre} ha sido promovido a {self.puesto}.")
+
+    def dar_de_baja(self):
+        """Marca al empleado como inactivo."""
+        self.activo = False
+        print(f"{self.nombre} {self.apellido} ha sido dado de baja.")
+
+
+# Ejemplo de uso:
+if __name__ == "__main__":
+    empleado1 = EmpleadoHotel("Laura", "Pérez", 101, "Recepcionista", 1500)
+    print(empleado1)
+    print("Salario anual:", empleado1.calcular_salario_anual())
+
+    empleado1.cambiar_puesto("Supervisora de Recepción", 2000)
+    print(empleado1)
+
+    empleado1.dar_de_baja()
+    print(empleado1)
