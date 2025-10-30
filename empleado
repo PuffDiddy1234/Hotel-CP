@@ -1,3 +1,5 @@
+# empleado.py
+*.py linguist-language=Python
 #empleado.py
 from datetime import datetime
 
