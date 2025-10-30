@@ -1,4 +1,5 @@
 # habitacion.py
+*.py linguist-language=Python
 
 class Habitacion:
     def __init__(self, numero, tipo, precio, capacidad, servicios=None):
