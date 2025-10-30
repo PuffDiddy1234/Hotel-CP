@@ -1,0 +1,55 @@
+# factura.py
+
+from datetime import datetime
+
+class Factura:
+    """
+    Representa una factura generada a partir de una reserva y su pago.
+    Contiene información de cliente, reserva, monto, impuestos y fecha de emisión.
+    """
+
+    IVA = 0.16  # 16% de impuesto sobre el total
+
+    def __init__(self, reserva, pago):
+        """
+        Inicializa la factura.
+        
+        Args:
+            reserva (Reserva): Reserva asociada.
+            pago (Pago): Pago asociado a la reserva.
+        """
+        self.reserva = reserva
+        self.pago = pago
+        self.cliente = reserva.cliente
+        self.fecha_emision = datetime.now()
+        self.subtotal = reserva.costo_total
+        self.impuesto = self.subtotal * self.IVA
+        self.total = self.subtotal + self.impuesto
+        self.numero_factura = self.generar_numero_factura()
+
+    def generar_numero_factura(self):
+        """
+        Genera un número único de factura basado en fecha y código de reserva.
+        """
+        timestamp = self.fecha_emision.strftime("%Y%m%d%H%M%S")
+        return f"FAC-{self.reserva.codigo_reserva}-{timestamp}"
+
+    def mostrar_factura(self):
+        """
+        Devuelve un texto completo con la información de la factura.
+        """
+        return (
+            f"🏨 FACTURA {self.numero_factura}\n"
+            f"Fecha emisión: {self.fecha_emision.strftime('%d/%m/%Y %H:%M')}\n"
+            f"Cliente: {self.cliente.nombre} (DNI: {self.cliente.dni})\n"
+            f"Habitación: {self.reserva.habitacion.numero} - {self.reserva.habitacion.tipo}\n"
+            f"Fecha ingreso: {self.reserva.fecha_ingreso.strftime('%d/%m/%Y')}\n"
+            f"Fecha salida: {self.reserva.fecha_salida.strftime('%d/%m/%Y')}\n"
+            f"Subtotal: ${self.subtotal:.2f}\n"
+            f"IVA (16%): ${self.impuesto:.2f}\n"
+            f"Total a pagar: ${self.total:.2f}\n"
+            f"Estado de pago: {self.pago.estado}\n"
+        )
+
+    def __str__(self):
+        return f"Factura {self.numero_factura} - Cliente: {self.cliente.nombre} - Total: ${self.total:.2f}"
