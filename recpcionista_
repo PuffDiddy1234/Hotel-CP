@@ -1,0 +1,34 @@
+# recepcionista_.py
+
+class Recepcionista:
+    def __init__(self, nombre):
+        self.nombre = nombre
+        self.huespedes_registrados = {}
+
+    def registrar_huesped(self, nombre_huesped, habitacion):
+        if nombre_huesped not in self.huespedes_registrados:
+            self.huespedes_registrados[nombre_huesped] = habitacion
+            print(f"Huesped {nombre_huesped} registrado en habitación {habitacion}.")
+        else:
+            print(f"El huesped {nombre_huesped} ya está registrado.")
+
+    def hacer_check_in(self, nombre_huesped):
+        if nombre_huesped in self.huespedes_registrados:
+            print(f"Check-in realizado para {nombre_huesped} en la habitación {self.huespedes_registrados[nombre_huesped]}.")
+        else:
+            print(f"No se encontró al huésped {nombre_huesped} para hacer check-in.")
+
+    def hacer_check_out(self, nombre_huesped):
+        if nombre_huesped in self.huespedes_registrados:
+            habitacion = self.huespedes_registrados.pop(nombre_huesped)
+            print(f"Check-out realizado para {nombre_huesped} de la habitación {habitacion}.")
+        else:
+            print(f"No se encontró al huésped {nombre_huesped} para hacer check-out.")
+
+    def mostrar_huespedes(self):
+        if self.huespedes_registrados:
+            print("Huéspedes actualmente registrados:")
+            for huesped, habitacion in self.huespedes_registrados.items():
+                print(f"- {huesped} en habitación {habitacion}")
+        else:
+            print("No hay huéspedes registrados actualmente.")
