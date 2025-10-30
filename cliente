@@ -1,0 +1,107 @@
+# cliente.py
+from datetime import datetime
+
+class Cliente:
+    """
+    Clase que representa a un cliente del hotel.
+    Contiene sus datos personales, reservas e historial de pagos.
+    """
+
+    def __init__(self, nombre, dni, telefono=None, email=None):
+        """
+        Inicializa un cliente con su información básica.
+        :param nombre: Nombre completo del cliente
+        :param dni: Documento de identidad (único)
+        :param telefono: Número telefónico (opcional)
+        :param email: Correo electrónico (opcional)
+        """
+        self.nombre = nombre
+        self.dni = dni
+        self.telefono = telefono
+        self.email = email
+        self.reservas = []          # Lista de objetos Reserva
+        self.puntos_cliente = 0     # Sistema de fidelidad
+        self.fecha_registro = datetime.now()
+
+    # ---------------- MÉTODOS PRINCIPALES ---------------- #
+
+    def agregar_reserva(self, reserva):
+        """
+        Agrega una reserva al historial del cliente.
+        :param reserva: Objeto de tipo Reserva
+        """
+        self.reservas.append(reserva)
+        print(f"✅ Reserva agregada correctamente al cliente {self.nombre}.")
+
+    def mostrar_info(self):
+        """
+        Muestra la información general del cliente.
+        """
+        info = (
+            f"👤 Cliente: {self.nombre}\n"
+            f"DNI: {self.dni}\n"
+            f"Teléfono: {self.telefono if self.telefono else 'No registrado'}\n"
+            f"Email: {self.email if self.email else 'No registrado'}\n"
+            f"Fecha de registro: {self.fecha_registro.strftime('%d/%m/%Y %H:%M')}\n"
+            f"Reservas registradas: {len(self.reservas)}\n"
+            f"Puntos acumulados: {self.puntos_cliente}\n"
+        )
+        return info
+
+    def historial_reservas(self):
+        """
+        Muestra el historial de reservas del cliente.
+        """
+        if not self.reservas:
+            print(f"❌ El cliente {self.nombre} no tiene reservas registradas.")
+            return
+
+        print(f"📅 Historial de reservas de {self.nombre}:")
+        for i, reserva in enumerate(self.reservas, start=1):
+            print(f"\nReserva {i}:")
+            print(reserva)
+            print("-" * 40)
+
+    def agregar_puntos(self, monto):
+        """
+        Agrega puntos al cliente en función del monto pagado.
+        Cada $100 genera 1 punto.
+        :param monto: Monto del pago realizado
+        """
+        puntos = int(monto / 100)
+        self.puntos_cliente += puntos
+        print(f"🏅 {self.nombre} ha ganado {puntos} puntos (Total: {self.puntos_cliente}).")
+
+    def canjear_puntos(self, puntos_a_canjear):
+        """
+        Permite al cliente canjear puntos por descuentos.
+        :param puntos_a_canjear: Cantidad de puntos que desea usar
+        """
+        if puntos_a_canjear <= 0:
+            print("⚠️ Los puntos a canjear deben ser mayores que cero.")
+            return 0
+
+        if puntos_a_canjear > self.puntos_cliente:
+            print("❌ No tienes suficientes puntos para canjear.")
+            return 0
+
+        # Cada punto equivale a $10 de descuento
+        descuento = puntos_a_canjear * 10
+        self.puntos_cliente -= puntos_a_canjear
+        print(f"💰 Has canjeado {puntos_a_canjear} puntos por un descuento de ${descuento}.")
+        return descuento
+
+    def validar_contacto(self):
+        """
+        Verifica si el cliente tiene al menos un medio de contacto.
+        """
+        if not self.telefono and not self.email:
+            print("⚠️ Cliente sin datos de contacto registrados.")
+            return False
+        return True
+
+    def __str__(self):
+        """
+        Representación corta del cliente.
+        """
+        return f"{self.nombre} (DNI: {self.dni})"
