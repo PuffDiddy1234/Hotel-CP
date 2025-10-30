@@ -1,5 +1,5 @@
 # pago.py
-
+*.py linguist-language=Python
 from datetime import datetime
 
 class Pago:
